@@ -42,14 +42,6 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-def load_faster_rcnn_open_images():
-    MODEL_NAME = Path('/home/prasannals/models/research/object_detection/faster_rcnn_inception_resnet_v2_atrous_oid_v4_2018_12_12')
-    PATH_TO_FROZEN_GRAPH = MODEL_NAME / 'frozen_inference_graph.pb'
-    PATH_TO_LABELS = MODEL_NAME / 'oid_v4_label_map.pbtxt'
-
-    inf = TFInference(PATH_TO_FROZEN_GRAPH, PATH_TO_LABELS)
-    return inf
-
 def objects_in_categories(path_df, inf, out_path, visualize=False):
     out_path = Path(out_path) if type(out_path) == str else out_path
 
