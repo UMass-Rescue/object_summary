@@ -42,7 +42,8 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-def objects_in_categories(path_df, inf, out_path, visualize=False):
+def objects_in_categories(path_df:'DataFrame - containing "path" and "category" columns', inf:TFInference, 
+    out_path:'str or pathlib.Path - path to save the visualizations', visualize:bool=False) -> 'list of dictionary containing the results':
     out_path = Path(out_path) if type(out_path) == str else out_path
 
     all_res = []
@@ -51,12 +52,21 @@ def objects_in_categories(path_df, inf, out_path, visualize=False):
         img_path, category = ser['path'], ser['category']
         res, res_img = inf.predict(img_path, visualize=visualize)
         if visualize:
-            cv2.imwrite(str(out_path / f'{i}.jpg'), res_img)
+            cv2.imwrite(str(out_path / f'{i}.jpg'), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR  ))
 #         res['file'] = img_path
         res['category'] = category
         all_res.append(res)
 
     return all_res
+
+def objects_in_folder(folder:'str or pathlib.Path - path to folder to be analyzed', inf:TFInference, 
+    out_path:'str or pathlib.Path - path to save the visualizations', visualize=False) -> 'list of dictionary containing the results':
+    folder = Path(folder) if type(folder) == str else folder
+    imgs = ls(folder)
+    paths = {'path':[str(f) for f in imgs],
+            'category': [folder for i in range(len(imgs))]}
+    res = objects_in_categories(pd.DataFrame(paths), inf, out_path, visualize=visualize)
+    return res
 
 def count_objects(raw_res, max_objects, object_names, threshold=0.0):
     di = defaultdict(lambda : np.zeros(max_objects))
