@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='object_summary',
-      version='0.1.4',
+      version='0.1.5',
       description='A library that makes use of object detection to provide insights into image data.',
       url='https://github.com/UMass-Rescue/object_summary',
       author='Prasanna Lakkur Subramanyam',
