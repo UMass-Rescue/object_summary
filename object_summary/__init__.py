@@ -23,7 +23,8 @@ def clf_folders_to_df(path):
     if len(dirs) <= 0:
         return None
     dirs = list(filter(lambda d: d.is_dir(), dirs ))
-    return reduce(lambda d1, d2: category_path_df(d1).append(category_path_df(d2), ignore_index=True), dirs)
+    return reduce(lambda d1, d2: d1.append(category_path_df(d2), ignore_index=True), dirs, 
+                    pd.DataFrame({'path':[], 'category':[]}))
 
 def cv2_imread_rgb(uri):
     return cv2.cvtColor(cv2.imread(str(uri)), cv2.COLOR_BGR2RGB)
