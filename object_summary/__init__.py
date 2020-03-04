@@ -7,6 +7,7 @@ import json
 import numpy as np
 from object_detection.utils import label_map_util
 from collections import defaultdict
+from tinydb import TinyDB
 
 def ls(path): return [f for f in path.glob('*')]
 
@@ -43,11 +44,18 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
+def np_to_list(di):
+    for k, v in di.items():
+        if isinstance(v, np.ndarray):
+            di[k] = v.tolist()
+
 def objects_in_categories(path_df:'DataFrame - containing "path" and "category" columns', inf:TFInference, 
-    out_path:'str or pathlib.Path - path to save the visualizations', visualize:bool=False) -> 'list of dictionary containing the results':
+    out_path:'str or pathlib.Path - path to save the visualizations and results database', db_name:str='res_db.json', 
+    visualize:bool=False) -> 'list of dictionary containing the results':
     out_path = Path(out_path) if type(out_path) == str else out_path
 
     all_res = []
+    db = TinyDB(str(out_path / db_name))
     for i in range(path_df.shape[0]):
         ser = path_df.iloc[i]
         img_path, category = ser['path'], ser['category']
@@ -56,7 +64,9 @@ def objects_in_categories(path_df:'DataFrame - containing "path" and "category" 
             cv2.imwrite(str(out_path / f'{i}.jpg'), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR  ))
 #         res['file'] = img_path
         res['category'] = category
+        np_to_list(res)
         all_res.append(res)
+        db.insert(res)
 
     return all_res
 
