@@ -8,6 +8,7 @@ import numpy as np
 from object_detection.utils import label_map_util
 from collections import defaultdict
 from tinydb import TinyDB
+import uuid
 
 def ls(path): return [f for f in path.glob('*')]
 
@@ -51,11 +52,11 @@ def np_to_list(di):
 
 def objects_in_categories(path_df:'DataFrame - containing "path" and "category" columns', inf:TFInference, 
     out_path:'str or pathlib.Path - path to save the visualizations and results database', db_name:'str, the name for the db (no file extension. just the name)', 
-    visualize:bool=False) -> 'list of dictionary containing the results':
+    filemap_name:'str:Name of the DB for mapping between unique file id and file',visualize:bool=False) -> 'list of dictionary containing the results':
     out_path = Path(out_path) if type(out_path) == str else out_path
 
-    all_res = []
     db = TinyDB(str(out_path / (db_name + '.json')))
+    filemap_db = TinyDB(str(out_path/ (filemap_name + '.json')))
     for i in range(path_df.shape[0]):
         ser = path_df.iloc[i]
         img_path, category = ser['path'], ser['category']
@@ -63,12 +64,14 @@ def objects_in_categories(path_df:'DataFrame - containing "path" and "category" 
         if visualize:
             cv2.imwrite(str(out_path / f'{i}.jpg'), cv2.cvtColor(res_img, cv2.COLOR_RGB2BGR  ))
 #         res['file'] = img_path
+        file_id = uuid.uuid4().hex
+        res['file_id'] = file_id
         res['category'] = category
         np_to_list(res)
-        all_res.append(res)
         db.insert(res)
+        filemap_db.insert({file_id:img_path})
 
-    return all_res
+    return db.all(), filemap_db.all()
 
 def objects_in_folder(folder:'str or pathlib.Path - path to folder to be analyzed', inf:TFInference, 
     out_path:'str or pathlib.Path - path to save the visualizations', visualize=False) -> 'list of dictionary containing the results':
