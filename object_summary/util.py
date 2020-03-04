@@ -29,7 +29,7 @@ def split_df(df, num_splits:int):
 def tree_viz(model: 'Decision Tree model', 
              class_names: 'list(str) - list of label names', 
              feature_names: 'list(str)', 
-             out_fname:'if specified, graph is saved to this path'=None) -> Image:
+             out_fname:'if specified, graph is saved to this path'=None,rotate=False) -> Image:
     dot_data = StringIO()
     export_graphviz(model, 
      out_file=dot_data, 
@@ -37,7 +37,7 @@ def tree_viz(model: 'Decision Tree model',
      feature_names=feature_names,
      filled=True,
      rounded=True,
-     special_characters=True)
+     special_characters=True, rotate=rotate)
 
     graph = pydotplus.graph_from_dot_data(dot_data.getvalue()) 
     if out_fname:

@@ -9,6 +9,7 @@ from object_detection.utils import label_map_util
 from collections import defaultdict
 from tinydb import TinyDB
 import uuid
+from tqdm import tqdm
 
 def ls(path): return [f for f in path.glob('*')]
 
@@ -50,6 +51,14 @@ def np_to_list(di):
         if isinstance(v, np.ndarray):
             di[k] = v.tolist()
 
+def remove_done_files(path_df, filemap_db):
+    already_done = filemap_db.all()
+    already_done_paths = [list(e.values())[0] for e in already_done]
+    done = path_df.path.isin(already_done_paths)
+    if done.sum() > 0:
+        print(f'Found {done.sum()} pre existing results in database. Ignoring these files and resuming the object detection...')
+    return path_df[~done]
+
 def objects_in_categories(path_df:'DataFrame - containing "path" and "category" columns', inf:TFInference, 
     out_path:'str or pathlib.Path - path to save the visualizations and results database', db_name:'str, the name for the db (no file extension. just the name)', 
     filemap_name:'str:Name of the DB for mapping between unique file id and file',visualize:bool=False) -> 'list of dictionary containing the results':
@@ -57,7 +66,8 @@ def objects_in_categories(path_df:'DataFrame - containing "path" and "category" 
 
     db = TinyDB(str(out_path / (db_name + '.json')))
     filemap_db = TinyDB(str(out_path/ (filemap_name + '.json')))
-    for i in range(path_df.shape[0]):
+    path_df = remove_done_files(path_df, filemap_db)
+    for i in tqdm(range(path_df.shape[0])):
         ser = path_df.iloc[i]
         img_path, category = ser['path'], ser['category']
         res, res_img = inf.predict(img_path, visualize=visualize)
