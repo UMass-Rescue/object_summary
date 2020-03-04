@@ -50,12 +50,12 @@ def np_to_list(di):
             di[k] = v.tolist()
 
 def objects_in_categories(path_df:'DataFrame - containing "path" and "category" columns', inf:TFInference, 
-    out_path:'str or pathlib.Path - path to save the visualizations and results database', db_name:str='res_db.json', 
+    out_path:'str or pathlib.Path - path to save the visualizations and results database', db_name:'str, the name for the db (no file extension. just the name)', 
     visualize:bool=False) -> 'list of dictionary containing the results':
     out_path = Path(out_path) if type(out_path) == str else out_path
 
     all_res = []
-    db = TinyDB(str(out_path / db_name))
+    db = TinyDB(str(out_path / (db_name + '.json')))
     for i in range(path_df.shape[0]):
         ser = path_df.iloc[i]
         img_path, category = ser['path'], ser['category']
