@@ -5,6 +5,60 @@ from sklearn.tree import export_graphviz
 import pydotplus
 from six import StringIO 
 from IPython.display import Image
+from PIL import Image
+import os
+from tqdm import tqdm
+import cv2
+
+def resize_img(img, resize_to=720):
+    '''
+    img : np.ndarray - image array of size (height, width, channels)
+    resize_to : int - the larger among height and width will be resized to "resize_to". 
+                    The other dimension will be scaled to preserve the original aspect ratio.
+                    
+    returns : np.ndarray - resized image
+    '''
+    h, w, ch = img.shape
+    if h <= resize_to and w <= resize_to:
+        return img
+
+    if h >= w:
+        new_h = resize_to
+        new_w = int((new_h / h) * w)
+    else:
+        new_w = resize_to
+        new_h = int((new_w / w) * h)
+
+    return cv2.resize(img, (new_w, new_h))
+
+
+def verify_image(path):
+    '''
+    path : str - path to the image
+
+    returns True if valid image file. returns False otherwise.
+
+    Reference - https://opensource.com/article/17/2/python-tricks-artists
+    '''
+    try:
+      img = Image.open(path)
+      img.verify()
+      return True
+    except (IOError, SyntaxError) as e:
+      return False
+
+def verify_images(paths, delete=False):
+    res = []
+    for path in tqdm(paths):
+        res.append(verify_image(path))
+
+    bad_paths = []
+    for p, r in zip(paths, res):
+        if r == False:
+            bad_paths.append(p)
+            if delete:
+                os.remove(p)
+    return bad_paths
 
 def split_df(df, num_splits:int):
     '''
