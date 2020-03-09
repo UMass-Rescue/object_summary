@@ -1,0 +1,11 @@
+tinydb==3.15.2
+tqdm==4.42.1
+numpy==1.18.1
+pandas==1.0.0
+pydotplus==2.0.2
+six==1.14.0
+opencv_python==4.1.2.30
+ipython==7.13.0
+Pillow==7.0.0
+scikit_learn==0.22.2.post1
+tf_object_detection_util==0.1.8
