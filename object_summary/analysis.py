@@ -1,5 +1,6 @@
 from collections import defaultdict
 import pandas as pd
+import numpy as np
 
 def counts_in_single_res(res:'list(str)') -> 'defaultdict(int)':
     '''
@@ -38,3 +39,17 @@ def get_counts_df(res:'results obtained from "objects_in_categories function"',
     count_df = count_df.sort_index(axis=1)
     return count_df
 
+def _get_cooccurance(df, col_one, col_two):
+    return ((df[col_one] > 0) & (df[col_two] > 0)).sum()
+
+def object_correlation(df, method='pearson',threshold=0):
+    corr_res = df.corr(method=method)
+    mask = np.triu(np.ones(corr_res.shape)).astype('bool')
+    mask[list(range(mask.shape[0])), list(range(mask.shape[1]))] = False
+    mask = mask.reshape(corr_res.size)
+    res = corr_res.stack()[mask].reset_index()
+    res.columns = ['object_1', 'object_2' , 'correlation']
+    res = res.sort_values(by='correlation')
+    res['occurance'] = res.apply(lambda s: _get_cooccurance(df, s['object_1'], s['object_2']) ,axis=1)
+    res = res[res.occurance > threshold]
+    return res
