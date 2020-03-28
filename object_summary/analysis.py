@@ -43,7 +43,7 @@ def _get_cooccurance(df, col_one, col_two):
     return ((df[col_one] > 0) & (df[col_two] > 0)).sum()
 
 def object_correlation(df, method='pearson',threshold=0):
-    corr_res = df.corr(method=method)
+    corr_res = df.corr(method=method).fillna(0.)
     mask = np.triu(np.ones(corr_res.shape)).astype('bool')
     mask[list(range(mask.shape[0])), list(range(mask.shape[1]))] = False
     mask = mask.reshape(corr_res.size)

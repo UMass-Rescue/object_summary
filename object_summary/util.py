@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.tree import export_graphviz
 import pydotplus
 from six import StringIO 
-from IPython.display import Image
+import IPython.display as display
 from PIL import Image
 import os
 from tqdm import tqdm
@@ -96,4 +96,4 @@ def tree_viz(model: 'Decision Tree model',
     graph = pydotplus.graph_from_dot_data(dot_data.getvalue()) 
     if out_fname:
         graph.write_png(out_fname)
-    return Image(graph.create_png())
+    return display.Image(graph.create_png())
