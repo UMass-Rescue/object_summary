@@ -1,25 +1,28 @@
 from collections import defaultdict
 import pandas as pd
 import numpy as np
+import pdb
 
-def counts_in_single_res(res:'list(str)') -> 'defaultdict(int)':
+def counts_in_single_res(res:'list(str)', key_suffix:str='') -> 'dict(int)':
     '''
     res - list of category strings
     returns - dictionary of form {objectname:count}
     '''
     object_counter = defaultdict(int)
     for e in res:
-        object_counter[e] += 1
-    return object_counter
+        object_counter[e+key_suffix] += 1
+    return dict(object_counter)
 
 def objects_in_categories_df(res:'results obtained from "objects_in_categories function"',
                             object_list_key:str = 'detection_classes_translated',
+                            id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
                             cat_str:'key (string) for accessing the category in "res" entries'='category') \
                             -> pd.DataFrame:
     counts = []
     for r in res:
         di = counts_in_single_res(r[object_list_key])
         di[cat_str] = r[cat_str]
+        di[id_col] = r[id_col]
         counts.append(di)
     count_df = pd.DataFrame(counts)
     count_df = count_df.fillna(0.0)
@@ -27,6 +30,7 @@ def objects_in_categories_df(res:'results obtained from "objects_in_categories f
 
 def get_counts_df(res:'results obtained from "objects_in_categories function"',
                     object_list_key:str = 'detection_classes_translated',
+                    id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
                     cat_str:'key (string) for accessing the category in "res" entries'='category') \
                     -> pd.DataFrame:
     '''
@@ -35,10 +39,62 @@ def get_counts_df(res:'results obtained from "objects_in_categories function"',
     objects that have been found in a category
     '''
     df = objects_in_categories_df(res)
+    df = df.drop(id_col, axis=1)
     count_df = df.groupby(by=cat_str).sum()
     count_df = count_df.sort_index(axis=1)
     return count_df
 
+def detection_box_to_dict(detection_box:list, key_prefix:str=''):
+    return {
+        key_prefix + 'tl_y':detection_box[0],
+        key_prefix + 'tl_x':detection_box[1],
+        key_prefix + 'br_y':detection_box[2],
+        key_prefix + 'br_x':detection_box[3]
+    }
+
+def extract_scores_and_bbox(res:'dict - single result', 
+        object_list_key:str = 'detection_classes_translated',
+        scores_key:str='detection_scores',
+        detection_boxes_key:str = 'detection_boxes',):
+    res_di = {}
+    counts = defaultdict(int)
+    all_objs = res[object_list_key]
+    for i in range(len(all_objs)):
+        cur_obj = all_objs[i]
+        cur_idx = counts[cur_obj]
+        counts[cur_obj] += 1
+        res_di[f'{cur_obj}_score_{cur_idx}'] = res[scores_key][i]
+        bbox = res[detection_boxes_key][i]
+        res_di[f'{cur_obj}_tl_y_{cur_idx}'] = bbox[0]
+        res_di[f'{cur_obj}_tl_x_{cur_idx}'] = bbox[1]
+        res_di[f'{cur_obj}_br_y_{cur_idx}'] = bbox[2]
+        res_di[f'{cur_obj}_br_x_{cur_idx}'] = bbox[3]
+    return res_di       
+
+def res_to_df(res:'results obtained from "objects_in_categories function"',
+                    object_list_key:str = 'detection_classes_translated',
+                    detection_boxes_key:str = 'detection_boxes',
+                    scores_key:str='detection_scores',
+                    img_height_key:str='img_height',
+                    img_width_key:str='img_width',
+                    num_detections_key:str='num_detections',
+                    id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
+                    cat_str:'key (string) for accessing the category in "res" entries'='category') \
+                    -> pd.DataFrame:
+    res_li = []
+    for r in res:
+        di = counts_in_single_res(r[object_list_key], key_suffix='_count')
+        di[cat_str] = r[cat_str]
+        di[id_col] = r[id_col]
+        di[img_height_key] = r[img_height_key]
+        di[img_width_key] = r[img_width_key]
+        di[num_detections_key] = r[num_detections_key]
+        di.update(extract_scores_and_bbox(r, object_list_key, scores_key, detection_boxes_key))
+        res_li.append(di)
+    df = pd.DataFrame(res_li)
+    return df
+
+    
 def _get_cooccurance(df, col_one, col_two):
     return ((df[col_one] > 0) & (df[col_two] > 0)).sum()
 
