@@ -15,43 +15,85 @@ def ls(path): return [f for f in path.glob('*')]
 
 fmts_to_regex = lambda img_fmts : '|'.join(map(lambda s: f'.({s})', img_fmts))
 
-def ls_images(path, img_fmts = ['jpg', 'jpeg', 'png']):
+def ls_images(path:Path, img_fmts:'list(str)' = ['jpg', 'jpeg', 'png']) -> 'list(pathlib.Path)':
+    '''
+    Returns files (list(pathlib.Path)) in "path" which have format = one of "img_fmts"
+    '''
     return [p for p in path.glob(f'*[{fmts_to_regex(img_fmts)}]' )]
 
-def category_path_df(path):
+def folder_to_cat_df(path:Path) -> pd.DataFrame:
+    '''
+    path - a folder containing files
+    Returns a DataFrame containing two columns - 'path' and 'category' where 'path' column contains
+        the absolute path to a file and 'category' column contains the category of the file (this will 
+        be the name of the folder)
+    '''
     return pd.DataFrame([{'path': str(p.absolute()), 'category': path.stem} for p in ls_images(path)])
 
-def clf_folders_to_df(path):
+def clf_folders_to_df(path:Path) -> pd.DataFrame:
+    '''
+    path - path to the folder containing other folders that contain files. Each file (not a directory file) 
+        will be labelled with category = parent folder of a file.
+    returns - pandas DataFrame containing two columns - "path" and "category" where each path is mapped
+        to its corresponding category.
+    '''
     dirs = ls(path)
     if len(dirs) <= 0:
         return None
     dirs = list(filter(lambda d: d.is_dir(), dirs ))
-    return reduce(lambda d1, d2: d1.append(category_path_df(d2), ignore_index=True), dirs, 
+    return reduce(lambda d1, d2: d1.append(folder_to_cat_df(d2), ignore_index=True), dirs, 
                     pd.DataFrame({'path':[], 'category':[]}))
 
-def cv2_imread_rgb(uri):
+def cv2_imread_rgb(uri:'str or pathlib.Path') -> np.ndarray:
+    '''
+    reads an image at the URI specified in "uri" as an RGB image 
+    returns the output as a numpy ndarray of shape (height, width, 3)
+    '''
     return cv2.cvtColor(cv2.imread(str(uri)), cv2.COLOR_BGR2RGB)
 
-def dump_to_json_file(obj, out_path):
+def dump_to_json_file(obj:'any python object. prefferably a list or dict or tuple', out_path:'str or pathlib.Path'):
+    '''
+    saves "obj" in the specified file at "out_path"
+
+    "read_json_from_file" can be used to read in the saved object at "out_path"
+    '''
     with open(out_path, 'w') as f:
         f.write(json.dumps(obj, cls=NumpyEncoder))
 
-def read_json_from_file(in_path):
+def read_json_from_file(in_path:'str or pathlib.Path'):
+    '''
+    reads the python object at "in_path" and returns the object
+
+    The function expects that "dump_to_json_file" function is used to save the 
+    python object to "in_path".
+    '''
     with open(in_path) as f:
         return json.loads(f.read())
     
 class NumpyEncoder(json.JSONEncoder):
+    '''
+    Encodes NumPy ndarrays into json.dumps compatible data format
+    '''
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-def np_to_list(di):
+def np_to_list(di:dict):
+    '''
+    Converts all values in "di" dictionary that are numpy ndarrays to a python list
+
+    WARNING - The conversion is done inplace. i.e. this function modifies "di".
+    '''
     for k, v in di.items():
         if isinstance(v, np.ndarray):
             di[k] = v.tolist()
 
-def remove_done_files(path_df, filemap_db):
+def remove_done_files(path_df:pd.DataFrame, filemap_db:TinyDB) -> pd.DataFrame:
+    '''
+    Removes rows in "path_df" where the column "path" is already present in the "filemap_db" database
+    returns a pandas DataFrame with all the rows removed whose "path" is present in "filemap_db".
+    '''
     already_done = filemap_db.all()
     already_done_paths = [list(e.values())[0] for e in already_done]
     done = path_df.path.isin(already_done_paths)
