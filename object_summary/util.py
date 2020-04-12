@@ -47,7 +47,8 @@ def verify_image(path):
     except (IOError, SyntaxError) as e:
       return False
 
-def verify_images(paths, delete=False):
+def verify_images(paths:'list(str) - list of paths', 
+                delete:'Boolean, if True, deletes corrupt images'=False) -> 'list(str): list of paths of corrupt images':
     res = []
     for path in tqdm(paths):
         res.append(verify_image(path))
@@ -81,8 +82,8 @@ def split_df(df, num_splits:int):
     return parts
 
 def tree_viz(model: 'Decision Tree model', 
-             class_names: 'list(str) - list of label names', 
-             feature_names: 'list(str)', 
+             class_names: 'list(str) - list of label (class) names', 
+             feature_names: 'list(str) - list of names of features of the independent variable', 
              out_fname:'if specified, graph is saved to this path'=None,rotate=False) -> Image:
     dot_data = StringIO()
     export_graphviz(model, 
