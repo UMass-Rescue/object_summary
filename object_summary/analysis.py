@@ -14,9 +14,9 @@ def counts_in_single_res(res:'list(str)', key_suffix:str='') -> 'dict(int)':
     return dict(object_counter)
 
 def objects_in_categories_df(res:'results obtained from "objects_in_categories function"',
-                            object_list_key:str = 'detection_classes_translated',
+                            object_list_key:'key (string) to access the list of detected class names' = 'detection_classes_translated',
                             id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
-                            cat_str:'key (string) for accessing the category in "res" entries'='category') \
+                            cat_str:'key (string) to access the category in "res" entries'='category') \
                             -> pd.DataFrame:
     counts = []
     for r in res:
@@ -29,9 +29,9 @@ def objects_in_categories_df(res:'results obtained from "objects_in_categories f
     return count_df
 
 def get_counts_df(res:'results obtained from "objects_in_categories function"',
-                    object_list_key:str = 'detection_classes_translated',
+                    object_list_key:'key (string) to access the list of detected class names' = 'detection_classes_translated',
                     id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
-                    cat_str:'key (string) for accessing the category in "res" entries'='category') \
+                    cat_str:'key (string) to access the category in "res" entries'='category') \
                     -> pd.DataFrame:
     '''
     res - list of dictionaries. Result obtained from "objects_in_categories" function
@@ -53,7 +53,7 @@ def detection_box_to_dict(detection_box:list, key_prefix:str=''):
     }
 
 def extract_scores_and_bbox(res:'dict - single result', 
-        object_list_key:str = 'detection_classes_translated',
+        object_list_key:'key (string) to access the list of detected class names' = 'detection_classes_translated',
         scores_key:str='detection_scores',
         detection_boxes_key:str = 'detection_boxes',):
     res_di = {}
@@ -72,14 +72,14 @@ def extract_scores_and_bbox(res:'dict - single result',
     return res_di       
 
 def res_to_df(res:'results obtained from "objects_in_categories function"',
-                    object_list_key:str = 'detection_classes_translated',
+                    object_list_key:'key (string) to access the list of detected class names' = 'detection_classes_translated',
                     detection_boxes_key:str = 'detection_boxes',
                     scores_key:str='detection_scores',
                     img_height_key:str='img_height',
                     img_width_key:str='img_width',
                     num_detections_key:str='num_detections',
                     id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
-                    cat_str:'key (string) for accessing the category in "res" entries'='category') \
+                    cat_str:'key (string) to access the category in "res" entries'='category') \
                     -> pd.DataFrame:
     res_li = []
     for r in res:
@@ -95,10 +95,23 @@ def res_to_df(res:'results obtained from "objects_in_categories function"',
     return df
 
     
-def _get_cooccurance(df, col_one, col_two):
+def _get_cooccurance(df:pd.DataFrame, col_one:str, col_two:str):
+    '''
+    returns the number of rows in df where both "col_one" and "col_two" entries are greater than 0.
+    '''
     return ((df[col_one] > 0) & (df[col_two] > 0)).sum()
 
-def object_correlation(df, method='pearson',threshold=0):
+def object_correlation(df:pd.DataFrame, method:str='pearson', threshold:int=0) -> pd.DataFrame:
+    '''
+    df - DataFrame where the rows correspond to results on individual images. The columns are object names and the 
+        values in each cell is a metric for an object in an image (Ex. number of occurances of an object in an image)
+    method - can be one of {‘pearson’, ‘kendall’, ‘spearman’} or callable (callable with input 
+        two 1d ndarrays and returning a float.)
+    threshold - removes pairs where the number of images where both objects occur is less than the specified threshold.
+
+    returns a pandas DataFrame where each row contains object names and their correlation score. The dataframe will be sorted
+        in an ascending order. 
+    '''
     corr_res = df.corr(method=method).fillna(0.)
     mask = np.triu(np.ones(corr_res.shape)).astype('bool')
     mask[list(range(mask.shape[0])), list(range(mask.shape[1]))] = False
