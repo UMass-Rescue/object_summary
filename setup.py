@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='object_summary',
-      version='0.2.1',
+      version='0.2.2',
       description='A library that makes use of object detection to provide insights into image data.',
       url='https://github.com/UMass-Rescue/object_summary',
       author='Prasanna Lakkur Subramanyam',
@@ -19,6 +19,7 @@ setup(name='object_summary',
             'ipython',
             'Pillow>=7.0.0',
             'scikit_learn',
-            'tf_object_detection_util'
+            'tf_object_detection_util',
+            'matplotlib'
       ],
       zip_safe=False)
