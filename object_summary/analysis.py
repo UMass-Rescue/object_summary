@@ -71,7 +71,7 @@ def extract_scores_and_bbox(res:'dict - single result',
         res_di[f'{cur_obj}_br_x_{cur_idx}'] = bbox[3]
     return res_di       
 
-def res_to_df(res:'results obtained from "objects_in_categories function"',
+def res_to_df(res:'results obtained from tf_object_detection_util',
                     object_list_key:'key (string) to access the list of detected class names' = 'detection_classes_translated',
                     detection_boxes_key:str = 'detection_boxes',
                     scores_key:str='detection_scores',
@@ -81,6 +81,15 @@ def res_to_df(res:'results obtained from "objects_in_categories function"',
                     id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
                     cat_str:'key (string) to access the category in "res" entries'='category') \
                     -> pd.DataFrame:
+    '''
+    Converts the results obtained from "tf_object_detection_util" library into a pandas
+    DataFrame. Multiple occurances of the same object in the same image will be recorded in
+    this format "{object_name}_{score/br_x/tl_x/br_y/tl_y}_{object_number}" but the object_number is ordered 
+    arbitrarily and the number has no meaning other than to identify distinct objects in the
+    same image. br_x and br_y represent the x and y coordinate of the bottom right point on
+    the bounding box of the object. tl_x and tl_y represent the x and y coordinate of the 
+    top left point on the object bounding box.
+    '''
     res_li = []
     for r in res:
         di = counts_in_single_res(r[object_list_key], key_suffix='_count')
