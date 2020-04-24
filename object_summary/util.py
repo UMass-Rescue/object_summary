@@ -30,7 +30,7 @@ def remove_done_files(path_df:pd.DataFrame, filemap_db:TinyDB) -> pd.DataFrame:
     already_done_paths = [list(e.values())[0] for e in already_done]
     done = path_df.path.isin(already_done_paths)
     if done.sum() > 0:
-        print(f'Found {done.sum()} pre existing results in database. Ignoring these files and resuming the object detection...')
+        print(f'Found {done.sum()} pre existing results in database. Ignoring these files.')
     return path_df[~done]
 
 def resize_img(img, resize_to=720):
