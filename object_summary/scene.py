@@ -4,6 +4,23 @@ from tinydb import TinyDB
 from .util import remove_done_files
 from pathlib import Path
 import uuid
+import os
+import pandas as pd
+
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+DATA_DIR = os.path.join(__location__, 'data')
+
+def load_labels():
+    with open(os.path.join(DATA_DIR, 'categories_places365.txt')) as f:
+        categories = [l.strip().split(' ')[0][3:] for l in f.readlines()]
+    
+    with open(os.path.join(DATA_DIR, 'labels_sunattribute.txt')) as f:
+        scene_attrs = [l.strip() for l in f.readlines()]
+    
+    return categories, scene_attrs
+
 
 def scene_detect(path_df:'DataFrame - containing "path" and "category" columns', model : SceneDetector,
     out_path:'str or pathlib.Path - path to save the results database', 
@@ -37,3 +54,35 @@ def scene_detect(path_df:'DataFrame - containing "path" and "category" columns',
     filemap_db.insert_multiple(filemap_acc)
 
     return db.all(), filemap_db.all()
+
+
+def format_scene_res(res, categories, scene_attrs, scene_threshold=None, attr_prefix='attr_'):
+    res_cvt = {}
+    
+    res_cvt['file_id'] = res['file_id']
+    res_cvt['category'] = res['category']
+    
+    res_cvt['indoor'] = 1 if res['type_of_env'] == 'indoor' else 0
+    
+    res_cats = res['scene_categories']
+    for cat in categories:
+        if cat in res_cats:
+            if scene_threshold:
+                res_cvt[cat] = 1 if res_cats[cat] >= scene_threshold else 0
+            else:
+                res_cvt[cat] = res_cats[cat]
+        else:
+            res_cvt[cat] = 0
+
+    res_sc_attrs = res['scene_attributes']
+    for sc_attr in scene_attrs:
+        res_cvt[attr_prefix + sc_attr] = 1 if sc_attr in res_sc_attrs else 0
+
+    return res_cvt    
+
+def scene_res_to_df(all_res, scene_threshold=None, attr_prefix='attr_'):
+    categories, scene_attrs = load_labels()
+    all_res_cvt = [format_scene_res(res, categories, scene_attrs, scene_threshold, attr_prefix) 
+                        for res in all_res]
+    df = pd.DataFrame(all_res_cvt)
+    return df
