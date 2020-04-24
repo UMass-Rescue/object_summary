@@ -8,7 +8,30 @@ import IPython.display as display
 from PIL import Image
 import os
 from tqdm import tqdm
+from tinydb import TinyDB
 import cv2
+
+def np_to_list(di:dict):
+    '''
+    Converts all values in "di" dictionary that are numpy ndarrays to a python list
+
+    WARNING - The conversion is done inplace. i.e. this function modifies "di".
+    '''
+    for k, v in di.items():
+        if isinstance(v, np.ndarray):
+            di[k] = v.tolist()
+
+def remove_done_files(path_df:pd.DataFrame, filemap_db:TinyDB) -> pd.DataFrame:
+    '''
+    Removes rows in "path_df" where the column "path" is already present in the "filemap_db" database
+    returns a pandas DataFrame with all the rows removed whose "path" is present in "filemap_db".
+    '''
+    already_done = filemap_db.all()
+    already_done_paths = [list(e.values())[0] for e in already_done]
+    done = path_df.path.isin(already_done_paths)
+    if done.sum() > 0:
+        print(f'Found {done.sum()} pre existing results in database. Ignoring these files and resuming the object detection...')
+    return path_df[~done]
 
 def resize_img(img, resize_to=720):
     '''

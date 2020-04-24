@@ -131,3 +131,9 @@ dmypy.json
 data/*
 out/*
 Dev.ipynb
+
+IO_places365.txt
+W_sceneattribute_wideresnet18.npy
+categories_places365.txt
+labels_sunattribute.txt
+wideresnet18_places365.pth.tar
