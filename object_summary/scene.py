@@ -1,11 +1,22 @@
 from scene_detection import SceneDetector
 from tqdm import tqdm
 from tinydb import TinyDB
-from .util import remove_done_files
 from pathlib import Path
 import uuid
 import os
 import pandas as pd
+
+def remove_done_files(path_df:pd.DataFrame, filemap_db:TinyDB) -> pd.DataFrame:
+    '''
+    Removes rows in "path_df" where the column "path" is already present in the "filemap_db" database
+    returns a pandas DataFrame with all the rows removed whose "path" is present in "filemap_db".
+    '''
+    already_done = filemap_db.all()
+    already_done_paths = [list(e.values())[0] for e in already_done]
+    done = path_df.path.isin(already_done_paths)
+    if done.sum() > 0:
+        print(f'Found {done.sum()} pre existing results in database. Ignoring these files.')
+    return path_df[~done]
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))

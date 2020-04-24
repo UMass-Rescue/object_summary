@@ -10,6 +10,34 @@ import os
 from tqdm import tqdm
 from tinydb import TinyDB
 import cv2
+from .analysis import objects_in_categories_df
+from .scene import scene_res_to_df
+
+def flatten_fmap_res(fmap_res:'list(dict) - results from db.all() on TinyDB'):
+    fmap_di = {}
+    for e in fmap_res:
+        k, v = next(iter(e.items()))
+        fmap_di[k] = v
+    return fmap_di
+
+def merge_scene_and_obj_results(obj_db:TinyDB, obj_fmap_db:TinyDB, 
+    scene_db:TinyDB, scene_fmap_db:TinyDB, scene_threshold:float=0.3):
+    '''
+    Merges the results of object detection and scene detection into a single
+    DataFrame (merges the results using file_id and category columns)
+    '''
+    obj_df = objects_in_categories_df(obj_db.all())
+    scene_df = scene_res_to_df(scene_db.all(), scene_threshold=scene_threshold)
+
+    scene_fmap = flatten_fmap_res(scene_fmap_db.all())
+    obj_fmap = flatten_fmap_res(obj_fmap_db.all())
+
+    obj_df.file_id = obj_df.file_id.map(obj_fmap)
+    scene_df.file_id = scene_df.file_id.map(scene_fmap)
+
+    merged_df = obj_df.merge(scene_df, on=('file_id', 'category'), 
+        how='inner', suffixes=('_obj', '_scene') )
+    return merged_df
 
 def np_to_list(di:dict):
     '''
@@ -20,18 +48,6 @@ def np_to_list(di:dict):
     for k, v in di.items():
         if isinstance(v, np.ndarray):
             di[k] = v.tolist()
-
-def remove_done_files(path_df:pd.DataFrame, filemap_db:TinyDB) -> pd.DataFrame:
-    '''
-    Removes rows in "path_df" where the column "path" is already present in the "filemap_db" database
-    returns a pandas DataFrame with all the rows removed whose "path" is present in "filemap_db".
-    '''
-    already_done = filemap_db.all()
-    already_done_paths = [list(e.values())[0] for e in already_done]
-    done = path_df.path.isin(already_done_paths)
-    if done.sum() > 0:
-        print(f'Found {done.sum()} pre existing results in database. Ignoring these files.')
-    return path_df[~done]
 
 def resize_img(img, resize_to=720):
     '''
