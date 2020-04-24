@@ -18,6 +18,10 @@ def objects_in_categories_df(res:'results obtained from "objects_in_categories f
                             id_col:'key (string) to access the unique ID for each entry in "res"'='file_id',
                             cat_str:'key (string) to access the category in "res" entries'='category') \
                             -> pd.DataFrame:
+    '''
+    returns a DataFrame where the rows represent a result of object detection on a file
+    the columns are objects. the cells represent the number of detected objects in a file.
+    '''
     counts = []
     for r in res:
         di = counts_in_single_res(r[object_list_key])
