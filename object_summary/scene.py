@@ -1,4 +1,3 @@
-from scene_detection import SceneDetector
 from tqdm import tqdm
 from tinydb import TinyDB
 from pathlib import Path
@@ -33,7 +32,7 @@ def load_labels():
     return categories, scene_attrs
 
 
-def scene_detect(path_df:'DataFrame - containing "path" and "category" columns', model : SceneDetector,
+def scene_detect(path_df:'DataFrame - containing "path" and "category" columns', model : 'SceneDetector',
     out_path:'str or pathlib.Path - path to save the results database', 
     db_name:'str, the name for the db (no file extension. just the name)', 
     filemap_name:'str:Name of the DB for mapping between unique file id and file',
