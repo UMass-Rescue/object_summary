@@ -68,7 +68,7 @@ def draw_bounding_box_heatmap(df:pd.DataFrame, width:int, height:int,
                               tl_x = 'tl_x', tl_y = 'tl_y', br_x = 'br_x', br_y = 'br_y', 
                               separator = '_', img_width = 'img_width', 
                               img_height = 'img_height', sort_objects=None, 
-                              filter_objects=filter_top, cmap='viridis'):
+                              filter_objects=filter_top, cmap='viridis', margin=4):
     '''
     df_full - the pandas DataFrame containing the results obtained from "res_to_df"
     '''
@@ -92,10 +92,16 @@ def draw_bounding_box_heatmap(df:pd.DataFrame, width:int, height:int,
                 tl_x_val = int(round(s[obj_tl_x + f'{separator}{j}'] * width))
                 br_y_val = int(round(s[obj_br_y + f'{separator}{j}'] * height))
                 br_x_val = int(round(s[obj_br_x + f'{separator}{j}'] * width))
-                agg[tl_y_val:br_y_val, max(min(tl_x_val, width-1)-8, 0): min(tl_x_val, width-1)] += 1
-                agg[tl_y_val:br_y_val, max(min(br_x_val, width-1)-8, 0): min(br_x_val, width-1)] += 1
-                agg[max(min(tl_y_val,height-1)-8, 0): min(tl_y_val,height-1) , tl_x_val:br_x_val] += 1
-                agg[max(min(br_y_val,height-1)-8, 0): min(br_y_val,height-1) , tl_x_val:br_x_val] += 1
+
+                # agg[tl_y_val:br_y_val, max(min(tl_x_val, width-1)-4, 0): min(tl_x_val, width-1)] += 1
+                # agg[tl_y_val:br_y_val, max(min(br_x_val, width-1)-4, 0): min(br_x_val, width-1)] += 1
+                # agg[max(min(tl_y_val,height-1)-8, 0): min(tl_y_val,height-1) , tl_x_val:br_x_val] += 1
+                # agg[max(min(br_y_val,height-1)-8, 0): min(br_y_val,height-1) , tl_x_val:br_x_val] += 1
+
+                agg[tl_y_val:br_y_val, max(tl_x_val-margin, 0): min(tl_x_val+margin, width-1)] += 1
+                agg[tl_y_val:br_y_val, max(br_x_val-margin, 0): min(br_x_val+margin, width-1)] += 1
+                agg[max(tl_y_val-margin, 0): min(tl_y_val+margin,height-1) , tl_x_val:br_x_val] += 1
+                agg[max(br_y_val-margin, 0): min(br_y_val+margin,height-1) , tl_x_val:br_x_val] += 1
 #                 agg[tl_y_val:br_y_val, tl_x_val:br_x_val] += 1
         plt.figure(figsize=(9, 14))
         plt.imshow(agg, cmap=cmap)
@@ -108,7 +114,7 @@ def filter_and_draw_bounding_box_heatmap(df:pd.DataFrame, keep_width:'list(int)'
                               tl_x = 'tl_x', tl_y = 'tl_y', br_x = 'br_x', br_y = 'br_y', 
                               separator = '_', img_width = 'img_width', 
                               img_height = 'img_height', num_top_objects=30,
-                             cmap='viridis'):
+                             cmap='viridis', margin=4):
     '''
     df_full - the pandas DataFrame containing the results obtained from "res_to_df"
     '''
@@ -116,4 +122,4 @@ def filter_and_draw_bounding_box_heatmap(df:pd.DataFrame, keep_width:'list(int)'
     
     draw_bounding_box_heatmap(df, width, height, objects, tl_x, tl_y, br_x, br_y, separator, 
                               img_width, img_height, sort_objects_using_counts, 
-                              partial(filter_top, top=num_top_objects), cmap)
+                              partial(filter_top, top=num_top_objects), cmap, margin=margin)
