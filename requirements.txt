@@ -5,7 +5,7 @@ matplotlib==3.1.1
 tqdm==4.36.1
 six==1.12.0
 ipython==7.13.0
-Pillow==7.1.1
+Pillow==8.3.2
 pydotplus==2.0.2
 scikit_learn==0.22.2.post1
 tf_object_detection_util==0.1.8
